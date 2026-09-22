@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Successful - Stripe Gateway</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .success-card {
+            text-align: center;
+        }
+
+        .icon-circle {
+            width: 72px;
+            height: 72px;
+            background: #dcfce7;
+            border: 2px solid #bbf7d0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px auto;
+            color: #16a34a;
+        }
+
+        .icon-circle svg {
+            width: 36px;
+            height: 36px;
+        }
+
+        .success-card h1 {
+            font-size: 24px;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 6px;
+        }
+
+        .success-card .subtitle {
+            font-size: 14px;
+            color: #64748b;
+            margin-bottom: 24px;
+        }
+
+        .receipt-details {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 28px;
+            text-align: left;
+        }
+
+        .receipt-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13.5px;
+            padding: 8px 0;
+            border-bottom: 1px dashed #e2e8f0;
+        }
+
+        .receipt-row:last-child {
+            border-bottom: none;
+        }
+
+        .receipt-label {
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .receipt-value {
+            color: #0f172a;
+            font-weight: 600;
+            font-family: monospace;
+            font-size: 13px;
+        }
+
+        .status-badge {
+            background: #dcfce7;
+            color: #15803d;
+            font-weight: 700;
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+
+        .home-btn {
+            display: inline-block;
+            width: 100%;
+            text-decoration: none;
+            text-align: center;
+            background: #4f46e5;
+            color: #ffffff;
+            border-radius: 10px;
+            padding: 14px;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
+        }
+
+        .home-btn:hover {
+            background: #4338ca;
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="checkout-container success-card">
+        <div class="icon-circle">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+            </svg>
+        </div>
+
+        <h1>Payment Successful!</h1>
+        <p class="subtitle">Thank you for your payment. Your order has been confirmed.</p>
+
+        <div class="receipt-details">
+            <div class="receipt-row">
+                <span class="receipt-label">Order Number</span>
+                <span id="order-id" class="receipt-value">#--</span>
+            </div>
+            <div class="receipt-row">
+                <span class="receipt-label">Payment ID</span>
+                <span id="payment-id" class="receipt-value">pi_--</span>
+            </div>
+            <div class="receipt-row">
+                <span class="receipt-label">Amount Paid</span>
+                <span id="amount-paid" class="receipt-value" style="font-family: inherit; font-size: 14px; font-weight: 700;">$35.00 USD</span>
+            </div>
+            <div class="receipt-row">
+                <span class="receipt-label">Status</span>
+                <span class="status-badge">Completed</span>
+            </div>
+        </div>
+
+        <a href="index.html" class="home-btn">← Return to Landing Page</a>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderId = urlParams.get('order_id');
+        const paymentId = urlParams.get('payment_id');
+        const amount = urlParams.get('amount');
+
+        if (orderId) {
+            document.getElementById('order-id').textContent = `#${orderId}`;
+        }
+        if (paymentId) {
+            document.getElementById('payment-id').textContent = paymentId;
+        }
+        if (amount) {
+            document.getElementById('amount-paid').textContent = `$${amount} USD`;
+        }
+    </script>
+</body>
+</html>

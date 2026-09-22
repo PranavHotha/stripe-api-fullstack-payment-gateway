@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stripe Payment Gateway Checkout</title>
+    <!-- Google Fonts & Stripe SDK -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://js.stripe.com/v3/"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="checkout-container">
+        <!-- Header / Product Summary -->
+        <div class="product-card">
+            <div class="header-badges">
+                <span class="badge">TEST MODE</span>
+                <button type="button" id="key-toggle-btn" class="key-toggle-link" title="Configure Stripe API Keys">
+                    <span>⚙️ API Keys</span>
+                    <span id="key-status-dot" class="status-dot dot-checking"></span>
+                </button>
+            </div>
+            <h2>Payment Gateway</h2>
+            <p class="description">Enter custom amount and test card numbers to pay.</p>
+            <div class="price-tag">
+                <span class="currency">$</span>
+                <span id="display-amount" class="amount">35.00</span>
+                <span class="usd">USD</span>
+            </div>
+        </div>
+
+        <!-- Stripe API Key Settings Drawer (Collapsed by default) -->
+        <div id="key-settings-panel" class="key-settings-panel hidden">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <span class="icon">🔑</span>
+                    <span>Stripe API Credentials</span>
+                </div>
+                <button type="button" id="close-panel-btn" class="close-panel-btn">&times;</button>
+            </div>
+            
+            <p class="panel-hint">Enter your Stripe keys below if not configured in <code>backend/.env</code>:</p>
+
+            <div class="form-group">
+                <label for="publishable-key-input">Publishable Key</label>
+                <input type="text" id="publishable-key-input" placeholder="pk_test_..." autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <label for="secret-key-input">Secret Key</label>
+                <input type="password" id="secret-key-input" placeholder="sk_test_..." autocomplete="off">
+            </div>
+
+            <div class="panel-actions">
+                <button type="button" id="save-keys-btn" class="save-keys-btn">Save Keys</button>
+                <button type="button" id="clear-keys-btn" class="clear-keys-btn">Reset</button>
+            </div>
+            <div id="keys-msg" class="keys-msg hidden"></div>
+        </div>
+
+        <!-- Payment Form -->
+        <form id="payment-form" class="payment-form">
+            <div class="form-group">
+                <label for="custom-amount">Payment Amount ($ USD)</label>
+                <input type="number" id="custom-amount" min="0.50" step="0.01" value="35.00" placeholder="35.00" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" placeholder="customer@example.com" required>
+            </div>
+
+            <div class="form-group">
+                <label for="card-element">Credit or Debit Card</label>
+                <div id="card-element" class="stripe-card-input">
+                    <!-- Stripe Elements will inject the card input here -->
+                </div>
+                <div id="card-errors" role="alert" class="card-errors"></div>
+            </div>
+
+            <button id="submit-btn" class="pay-btn" type="submit">
+                <span id="btn-text">Pay $35.00</span>
+                <span id="spinner" class="spinner hidden"></span>
+            </button>
+        </form>
+
+        <!-- Result / Notification Alert -->
+        <div id="payment-result" class="result-box hidden"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

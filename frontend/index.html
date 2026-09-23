@@ -17,11 +17,7 @@
         <!-- Header / Product Summary -->
         <div class="product-card">
             <div class="header-badges">
-                <span class="badge">TEST MODE</span>
-                <button type="button" id="key-toggle-btn" class="key-toggle-link" title="Configure Stripe API Keys">
-                    <span>⚙️ API Keys</span>
-                    <span id="key-status-dot" class="status-dot dot-checking"></span>
-                </button>
+                <span class="badge">Development Mode</span>
             </div>
             <h2>Payment Gateway</h2>
             <p class="description">Enter custom amount and test card numbers to pay.</p>
@@ -30,35 +26,6 @@
                 <span id="display-amount" class="amount">35.00</span>
                 <span class="usd">USD</span>
             </div>
-        </div>
-
-        <!-- Stripe API Key Settings Drawer (Collapsed by default) -->
-        <div id="key-settings-panel" class="key-settings-panel hidden">
-            <div class="panel-header">
-                <div class="panel-title">
-                    <span class="icon">🔑</span>
-                    <span>Stripe API Credentials</span>
-                </div>
-                <button type="button" id="close-panel-btn" class="close-panel-btn">&times;</button>
-            </div>
-            
-            <p class="panel-hint">Enter your Stripe keys below if not configured in <code>backend/.env</code>:</p>
-
-            <div class="form-group">
-                <label for="publishable-key-input">Publishable Key</label>
-                <input type="text" id="publishable-key-input" placeholder="pk_test_..." autocomplete="off">
-            </div>
-
-            <div class="form-group">
-                <label for="secret-key-input">Secret Key</label>
-                <input type="password" id="secret-key-input" placeholder="sk_test_..." autocomplete="off">
-            </div>
-
-            <div class="panel-actions">
-                <button type="button" id="save-keys-btn" class="save-keys-btn">Save Keys</button>
-                <button type="button" id="clear-keys-btn" class="clear-keys-btn">Reset</button>
-            </div>
-            <div id="keys-msg" class="keys-msg hidden"></div>
         </div>
 
         <!-- Payment Form -->

@@ -119,12 +119,12 @@
         </div>
 
         <h1>Payment Successful!</h1>
-        <p class="subtitle">Thank you for your payment. Your order has been confirmed.</p>
+        <p class="subtitle">Thank you for your payment. Your transaction has been confirmed.</p>
 
         <div class="receipt-details">
             <div class="receipt-row">
-                <span class="receipt-label">Order Number</span>
-                <span id="order-id" class="receipt-value">#--</span>
+                <span class="receipt-label">Transaction ID</span>
+                <span id="transaction-id" class="receipt-value">#--</span>
             </div>
             <div class="receipt-row">
                 <span class="receipt-label">Payment ID</span>
@@ -145,12 +145,12 @@
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
-        const orderId = urlParams.get('order_id');
+        const transactionId = urlParams.get('transaction_id') || urlParams.get('order_id');
         const paymentId = urlParams.get('payment_id');
         const amount = urlParams.get('amount');
 
-        if (orderId) {
-            document.getElementById('order-id').textContent = `#${orderId}`;
+        if (transactionId) {
+            document.getElementById('transaction-id').textContent = `#${transactionId}`;
         }
         if (paymentId) {
             document.getElementById('payment-id').textContent = paymentId;

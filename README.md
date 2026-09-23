@@ -1,13 +1,13 @@
 # 💳 Stripe API Payment Gateway
 
-A fullstack Stripe payment gateway built with **Django REST Framework** on the backend and **vanilla HTML/CSS/JavaScript + Stripe.js** on the frontend. Supports custom payment amounts, real-time card validation, order persistence, and a Django Admin panel — all running in Stripe test mode.
+A fullstack Stripe payment gateway built with **Django REST Framework** on the backend and **vanilla HTML/CSS/JavaScript + Stripe.js** on the frontend. Supports custom payment amounts, real-time card validation, transaction persistence, and a Django Admin panel — all running in Stripe test mode.
 
 ---
 
 ## 🚀 Live Demo Flow
 
 ```
-Customer enters amount & card → Frontend sends to Django API → Stripe processes payment → Order saved to DB → Success receipt shown
+Customer enters amount & card → Frontend sends to Django API → Stripe processes payment → Transaction saved to DB → Success receipt shown
 ```
 
 ---
@@ -30,11 +30,10 @@ Customer enters amount & card → Frontend sends to Django API → Stripe proces
 - 💰 **Custom payment amounts** — user can enter any amount (min $0.50)
 - 💳 **Stripe Elements card UI** — secure, embedded card input
 - 📧 **Customer email capture** — stored with each order
-- 🧾 **Order tracking** — every transaction saved to SQLite with Stripe Payment ID
-- 🔑 **Runtime API key injection** — enter Stripe keys directly in the UI without touching `.env`
-- 📊 **Django Admin panel** — view, search, and filter all orders
+- 🧾 **Transaction tracking** — every transaction saved to SQLite with Stripe Payment ID
+- 📊 **Django Admin panel** — view, search, and filter all transactions
 - ✅ **REST API** — `/orders/` endpoint returns all orders as JSON
-- 🔒 **Environment-based secrets** — keys loaded from `.env`, never hardcoded
+- 🔒 **Environment-based secrets** — keys loaded securely from `.env`, never exposed to the client
 
 ---
 
@@ -56,7 +55,7 @@ stripe-api-payment-gateway/
 ├── stripegateway/            # Django project
 │   ├── manage.py
 │   ├── payments/             # Core app
-│   │   ├── models.py         # Order model
+│   │   ├── models.py         # Transaction model
 │   │   ├── views.py          # API endpoints
 │   │   ├── serializers.py
 │   │   ├── urls.py
@@ -65,10 +64,7 @@ stripe-api-payment-gateway/
 │       ├── settings.py
 │       └── urls.py
 │
-├── run.py                    # One-command launcher for both servers
-├── run_all.bat               # Windows shortcut: start both servers
-├── run_backend.bat           # Windows shortcut: backend only
-└── run_frontend.bat          # Windows shortcut: frontend only
+├── run.py                    # Cross-platform runner for backend & frontend servers
 ```
 
 ---
@@ -147,13 +143,6 @@ python run.py backend     # Django API on http://127.0.0.1:8001
 python run.py frontend    # Frontend on  http://127.0.0.1:5500
 ```
 
-**Windows batch shortcuts:**
-```
-run_all.bat        # Start both
-run_backend.bat    # Backend only
-run_frontend.bat   # Frontend only
-```
-
 ---
 
 ## 🌐 Available Endpoints
@@ -164,8 +153,11 @@ run_frontend.bat   # Frontend only
 | `http://127.0.0.1:8001/` | GET | API landing page |
 | `http://127.0.0.1:8001/health/` | GET | Health check |
 | `http://127.0.0.1:8001/config/` | GET | Returns publishable key status |
-| `http://127.0.0.1:8001/create-payment-intent/` | POST | Creates Stripe PaymentIntent + saves Order |
-| `http://127.0.0.1:8001/orders/` | GET | Lists all orders (JSON) |
+| `http://127.0.0.1:8001/create-payment-intent/` | POST | Creates Stripe PaymentIntent + saves Transaction |
+| `http://127.0.0.1:8001/confirm-payment/` | POST | Verifies payment with Stripe & marks status as `succeeded` |
+| `http://127.0.0.1:8001/webhook/` | POST | Stripe Webhook listener for asynchronous payment events |
+| `http://127.0.0.1:8001/transactions/` | GET | Lists all transactions (JSON) |
+| `http://127.0.0.1:8001/orders/` | GET | Alias for `/transactions/` |
 | `http://127.0.0.1:8001/admin/` | — | Django Admin panel |
 
 ---
@@ -184,24 +176,13 @@ run_frontend.bat   # Frontend only
 
 ---
 
-## 🔑 Runtime API Key Configuration
-
-If you don't want to set up a `.env` file, you can enter your Stripe keys directly in the checkout UI:
-
-1. Click the **⚙️ API Keys** button in the header
-2. Enter your Stripe Publishable Key and Secret Key
-3. Click **Save Keys** — they're stored in browser `localStorage` and sent securely to the backend on payment
-
----
-
 ## 📦 `create-payment-intent` API — Request & Response
 
 **Request** `POST /create-payment-intent/`
 ```json
 {
   "amount": 3500,
-  "email": "customer@example.com",
-  "secretKey": "sk_test_..."
+  "email": "customer@example.com"
 }
 ```
 
@@ -209,6 +190,7 @@ If you don't want to set up a `.env` file, you can enter your Stripe keys direct
 ```json
 {
   "clientSecret": "pi_xxx_secret_xxx",
+  "transactionId": 42,
   "orderId": 42
 }
 ```
@@ -217,7 +199,7 @@ If you don't want to set up a `.env` file, you can enter your Stripe keys direct
 
 ## 🧑‍💼 Django Admin
 
-Access at `http://127.0.0.1:8001/admin/` — view, search, and filter all customer orders with full Stripe Payment ID, amount, status, email, and timestamp.
+Access at `http://127.0.0.1:8001/admin/` — view, search, and filter all customer transactions with full Stripe Payment ID, amount, status, email, and timestamp.
 
 ---
 

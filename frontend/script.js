@@ -4,23 +4,10 @@ document.addEventListener('DOMContentLoaded', function () {
     let elements = null;
     let cardElement = null;
 
-    const DEFAULT_PUB_KEY = 'pk_test_51R1SnWDFY4taHmOmRLTblZJEsWaleUW9bUJCXbKQIBWyb34aqHlZRSlLrASPFJ7JWmMBwdleFL4qEIgFs8odXLAu00wH9mMHtR';
-
-    let activePublishableKey = localStorage.getItem('stripe_pub_key') || '';
-    let activeSecretKey = localStorage.getItem('stripe_sec_key') || '';
+    // Use absolute backend URL if running frontend on port 5500, otherwise relative
+    const API_BASE = (window.location.port === '5500') ? 'http://127.0.0.1:8001' : '';
 
     // DOM Elements
-    const pubKeyInput = document.getElementById('publishable-key-input');
-    const secKeyInput = document.getElementById('secret-key-input');
-    const saveKeysBtn = document.getElementById('save-keys-btn');
-    const clearKeysBtn = document.getElementById('clear-keys-btn');
-    const keysMsg = document.getElementById('keys-msg');
-
-    const keyToggleBtn = document.getElementById('key-toggle-btn');
-    const keySettingsPanel = document.getElementById('key-settings-panel');
-    const closePanelBtn = document.getElementById('close-panel-btn');
-    const keyStatusDot = document.getElementById('key-status-dot');
-
     const amountInput = document.getElementById('custom-amount');
     const displayAmount = document.getElementById('display-amount');
     const btnText = document.getElementById('btn-text');
@@ -45,77 +32,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
 
-    // --- Toggle Panel ---
-    keyToggleBtn.addEventListener('click', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        keySettingsPanel.classList.toggle('hidden');
-    });
-
-    closePanelBtn.addEventListener('click', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        keySettingsPanel.classList.add('hidden');
-    });
-
-    // --- Save Keys ---
-    saveKeysBtn.addEventListener('click', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-
-        const pubVal = pubKeyInput.value.trim();
-        const secVal = secKeyInput.value.trim();
-
-        if (pubVal) {
-            localStorage.setItem('stripe_pub_key', pubVal);
-            activePublishableKey = pubVal;
-        } else {
-            localStorage.removeItem('stripe_pub_key');
-            activePublishableKey = '';
-        }
-
-        if (secVal) {
-            localStorage.setItem('stripe_sec_key', secVal);
-            activeSecretKey = secVal;
-        } else {
-            localStorage.removeItem('stripe_sec_key');
-            activeSecretKey = '';
-        }
-
-        const effectivePub = activePublishableKey || DEFAULT_PUB_KEY;
-        const isOk = setupStripeElement(effectivePub);
-        updateStatusDot(effectivePub, Boolean(activeSecretKey || secVal));
-
-        showKeysMsg(isOk ? 'API Keys saved successfully!' : 'Keys saved, but Publishable Key may be invalid.', isOk ? 'success' : 'error');
-
-        setTimeout(function () {
-            keysMsg.classList.add('hidden');
-            if (isOk) keySettingsPanel.classList.add('hidden');
-        }, 1800);
-    });
-
-    // --- Clear/Reset Keys ---
-    clearKeysBtn.addEventListener('click', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-
-        localStorage.removeItem('stripe_pub_key');
-        localStorage.removeItem('stripe_sec_key');
-        activePublishableKey = '';
-        activeSecretKey = '';
-        pubKeyInput.value = '';
-        secKeyInput.value = '';
-
-        setupStripeElement(DEFAULT_PUB_KEY);
-        updateStatusDot(DEFAULT_PUB_KEY, false);
-        showKeysMsg('Custom keys reset to defaults.', 'success');
-        setTimeout(function () { keysMsg.classList.add('hidden'); }, 2000);
-    });
-
     // --- Setup Stripe Card Element ---
     function setupStripeElement(pubKey) {
         const cardContainer = document.getElementById('card-element');
-        const keyToUse = pubKey || DEFAULT_PUB_KEY;
 
         try {
             if (cardElement) {
@@ -123,7 +42,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 cardElement = null;
             }
 
-            stripe = Stripe(keyToUse);
+            stripe = Stripe(pubKey);
             elements = stripe.elements();
             cardElement = elements.create('card', {
                 style: cardStyle,
@@ -140,66 +59,33 @@ document.addEventListener('DOMContentLoaded', function () {
 
             return true;
         } catch (err) {
-            cardContainer.innerHTML = '<p class="card-placeholder-err">⚠️ Invalid Stripe Key: ' + err.message + '</p>';
+            cardContainer.innerHTML = '<p class="card-placeholder-err">⚠️ Failed to initialize Stripe Elements: ' + err.message + '</p>';
             return false;
         }
     }
 
-    // --- Fetch config from backend ---
+    // --- Fetch Stripe Publishable Key from backend (.env) ---
     async function loadConfig() {
+        const cardContainer = document.getElementById('card-element');
         try {
-            const res = await fetch('http://127.0.0.1:8001/config/');
-            if (!res.ok) throw new Error('Non-200 response');
+            const res = await fetch(API_BASE + '/config/');
+            if (!res.ok) throw new Error('Backend returned status ' + res.status);
             const data = await res.json();
 
-            const backendPubKey = data.publishableKey || '';
-            const backendHasSecret = data.hasSecretKey || false;
-            const effectivePubKey = activePublishableKey || backendPubKey || DEFAULT_PUB_KEY;
-
-            if (activePublishableKey) {
-                pubKeyInput.value = activePublishableKey;
-            } else if (backendPubKey) {
-                pubKeyInput.placeholder = backendPubKey.substring(0, 20) + '...';
+            if (!data.publishableKey) {
+                showResult('STRIPE_PUBLISHABLE_KEY is not configured in backend/.env.', 'error');
+                cardContainer.innerHTML = '<p class="card-placeholder-err">⚠️ Stripe keys not configured in backend .env</p>';
+                submitBtn.disabled = true;
+                return;
             }
 
-            if (activeSecretKey) {
-                secKeyInput.value = activeSecretKey;
-            } else if (backendHasSecret) {
-                secKeyInput.placeholder = '•••••••••••••••• (Loaded from .env)';
-            }
-
-            updateStatusDot(effectivePubKey, activeSecretKey || backendHasSecret);
-            setupStripeElement(effectivePubKey);
+            setupStripeElement(data.publishableKey);
 
         } catch (e) {
-            // Backend offline — fall back to defaults
-            const fallbackKey = activePublishableKey || DEFAULT_PUB_KEY;
-            if (activePublishableKey) pubKeyInput.value = activePublishableKey;
-            if (activeSecretKey) secKeyInput.value = activeSecretKey;
-            setupStripeElement(fallbackKey);
-            updateStatusDot(fallbackKey, Boolean(activeSecretKey));
+            showResult('Could not connect to backend API (http://127.0.0.1:8001). Please ensure the backend server is running.', 'error');
+            cardContainer.innerHTML = '<p class="card-placeholder-err">⚠️ Backend connection offline. Start the server to load Stripe.</p>';
+            submitBtn.disabled = true;
         }
-    }
-
-    // --- Status dot ---
-    function updateStatusDot(pubKey, hasSecret) {
-        if (pubKey && hasSecret) {
-            keyStatusDot.className = 'status-dot dot-green';
-            keyStatusDot.title = 'Stripe API Keys active';
-        } else if (pubKey || hasSecret) {
-            keyStatusDot.className = 'status-dot dot-orange';
-            keyStatusDot.title = 'Partially configured';
-        } else {
-            keyStatusDot.className = 'status-dot dot-red';
-            keyStatusDot.title = 'API Keys missing — click to configure';
-        }
-    }
-
-    // --- Keys message helper ---
-    function showKeysMsg(text, type) {
-        keysMsg.textContent = text;
-        keysMsg.className = 'keys-msg ' + type;
-        keysMsg.classList.remove('hidden');
     }
 
     // --- Live price update ---
@@ -216,7 +102,7 @@ document.addEventListener('DOMContentLoaded', function () {
         setLoading(true);
         resultBox.classList.add('hidden');
 
-        const email = document.getElementById('email').value;
+        const email = document.getElementById('email').value.trim();
         const userAmount = parseFloat(amountInput.value) || 0;
 
         if (userAmount < 0.50) {
@@ -226,14 +112,10 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         const amountInCents = Math.round(userAmount * 100);
-
         const payload = { amount: amountInCents, email: email };
 
-        const customSec = secKeyInput.value.trim() || activeSecretKey;
-        if (customSec) payload.secretKey = customSec;
-
         try {
-            const response = await fetch('http://127.0.0.1:8001/create-payment-intent/', {
+            const response = await fetch(API_BASE + '/create-payment-intent/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -241,14 +123,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const data = await response.json();
 
-            if (data.error) {
-                showResult('Backend Error: ' + data.error, 'error');
+            if (!response.ok || data.error) {
+                showResult('Payment Error: ' + (data.error || 'Server error occurred'), 'error');
                 setLoading(false);
                 return;
             }
 
             if (!stripe || !cardElement) {
-                showResult('Stripe is not initialized. Please enter a valid Publishable Key.', 'error');
+                showResult('Stripe is not initialized. Please verify your backend configuration.', 'error');
                 setLoading(false);
                 return;
             }
@@ -261,15 +143,46 @@ document.addEventListener('DOMContentLoaded', function () {
             });
 
             if (result.error) {
-                showResult('Payment Failed: ' + result.error.message, 'error');
+                // Immediately notify backend that the payment was declined
+                const paymentIntentId = (result.error.payment_intent && result.error.payment_intent.id) ||
+                                        (data.clientSecret ? data.clientSecret.split('_secret')[0] : null);
+                if (paymentIntentId) {
+                    try {
+                        await fetch(API_BASE + '/confirm-payment/', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                paymentIntentId: paymentIntentId,
+                                status: 'declined'
+                            })
+                        });
+                    } catch (err) {
+                        console.warn('Backend payment decline notification warning:', err);
+                    }
+                }
+
+                showResult('Payment Declined: ' + result.error.message, 'error');
                 setLoading(false);
-            } else if (result.paymentIntent.status === 'succeeded') {
-                window.location.href = 'success.html?order_id=' + data.orderId +
+            } else if (result.paymentIntent && result.paymentIntent.status === 'succeeded') {
+                // Immediately notify backend to verify with Stripe and update Transaction status to 'succeeded'
+                try {
+                    await fetch(API_BASE + '/confirm-payment/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ paymentIntentId: result.paymentIntent.id })
+                    });
+                } catch (confirmErr) {
+                    console.warn('Backend payment confirmation request warning:', confirmErr);
+                }
+
+                const txId = data.transactionId || data.orderId;
+                window.location.href = 'success.html?transaction_id=' + txId +
+                    '&order_id=' + txId +
                     '&payment_id=' + result.paymentIntent.id +
                     '&amount=' + userAmount.toFixed(2);
             }
         } catch (err) {
-            showResult('Connection Error: ' + err.message, 'error');
+            showResult('Network Error: ' + err.message, 'error');
             setLoading(false);
         }
     });
@@ -286,6 +199,6 @@ document.addEventListener('DOMContentLoaded', function () {
         resultBox.classList.remove('hidden');
     }
 
-    // Boot
+    // Initialize
     loadConfig();
 });

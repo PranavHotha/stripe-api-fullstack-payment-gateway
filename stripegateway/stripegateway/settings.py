@@ -29,7 +29,23 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-#xw+*tetf8p-mj
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.onrender.com',
+    'https://*.pythonanywhere.com',
+    'https://*.trycloudflare.com',
+    'https://*.ngrok-free.app',
+    'https://*.ngrok.app',
+    'https://*.loca.lt',
+    'https://*.pinggy.link',
+    'https://*.pinggy.io',
+    'https://*.lhr.life',
+    'http://127.0.0.1:8001',
+    'http://localhost:8001',
+    'http://127.0.0.1:5500',
+    'http://localhost:5500',
+]
 
 
 # Application definition
@@ -142,12 +158,15 @@ if env_path.exists():
         config = Config(RepositoryEnv(env_path))
         STRIPE_PUBLISHABLE_KEY = config('STRIPE_PUBLISHABLE_KEY', default='')
         STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY', default='')
+        STRIPE_WEBHOOK_SECRET = config('STRIPE_WEBHOOK_SECRET', default='')
     except Exception:
         STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY', '')
         STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
+        STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
 else:
     STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY', '')
     STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
+    STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
 
 # Allow frontend (localhost:5500) to talk to backend (localhost:8000)
 CORS_ALLOW_ALL_ORIGINS = True
